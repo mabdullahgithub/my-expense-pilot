@@ -28,9 +28,11 @@ class AdminPanelProvider extends PanelProvider
             ->path('admin')
             ->login(\App\Filament\Pages\Auth\Login::class)
             ->registration(\App\Filament\Pages\Auth\Register::class)
+            ->passwordReset(\App\Filament\Pages\Auth\RequestPasswordReset::class, \App\Filament\Pages\Auth\ResetPassword::class)
             ->brandName(config('app.name'))
             ->colors([
-                'primary' => Color::Amber,
+                'primary' => Color::hex('#f26157'),
+                'secondary' => Color::hex('#04471c'),
             ])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')

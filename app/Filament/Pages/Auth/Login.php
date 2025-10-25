@@ -17,6 +17,14 @@ class Login extends BaseLogin
             ->url(route('filament.admin.auth.register'));
     }
 
+    public function forgotPasswordAction(): Action
+    {
+        return Action::make('forgotPassword')
+            ->link()
+            ->label('Forgot password?')
+            ->url(route('filament.admin.auth.password-reset.request'));
+    }
+
     public function getSubheading(): string | Htmlable | null
     {
         return null;
