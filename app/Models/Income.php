@@ -22,6 +22,7 @@ final class Income extends Model
     protected $fillable = [
         'user_id',
         'category_id',
+        'employment_history_id',
         'title',
         'amount',
         'entry_date'
@@ -84,6 +85,16 @@ final class Income extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Get the employment history associated with the income.
+     *
+     * @return BelongsTo
+     */
+    public function employmentHistory(): BelongsTo
+    {
+        return $this->belongsTo(EmploymentHistory::class);
     }
 
     public function TotalIncome(): float

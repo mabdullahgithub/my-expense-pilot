@@ -2,7 +2,9 @@
 
 namespace App\Filament\Pages;
 
+use App\Models\User;
 use Filament\Actions\Action;
+use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Pages\Page;
@@ -36,11 +38,20 @@ class Profile extends Page
 
     public function mount(): void
     {
+        $user = auth()->user();
+        $profileType = $user->profile_type;
+
+        // Ensure profile_type is an array
+        if (!is_array($profileType)) {
+            $profileType = json_decode($profileType, true) ?? [];
+        }
+
         $this->data = [
-            'name' => auth()->user()->name,
-            'email' => auth()->user()->email,
-            'country' => auth()->user()->country,
-            'currency' => auth()->user()->currency,
+            'name' => $user->name,
+            'email' => $user->email,
+            'country' => $user->country,
+            'currency' => $user->currency,
+            'profile_type' => $profileType,
         ];
     }
 
@@ -79,6 +90,14 @@ class Profile extends Page
                         TextInput::make('email')
                             ->label('Email Address')
                             ->required(),
+                        CheckboxList::make('profile_type')
+                            ->label('Profile Types')
+                            ->options(User::getProfileTypeOptions())
+                            ->required()
+                            ->minItems(1)
+                            ->helperText('Select at least one profile type. You can select multiple (e.g., Employee + Freelancer + Student)')
+                            ->columns(2)
+                            ->columnSpanFull(),
                     ]),
                 Section::make('Configuration')
                     ->schema([
@@ -150,16 +169,26 @@ class Profile extends Page
             'password' => !empty($data['new_password']) ? Hash::make($data['new_password']) : null,
             'country' => $data['country'] ?? null,
             'currency' => $data['currency'] ?? null,
+            'profile_type' => $data['profile_type'] ?? null,
         ]);
 
         auth()->user()->update($state);
 
         // Reload the form with updated data
+        $user = auth()->user()->fresh();
+        $profileType = $user->profile_type;
+
+        // Ensure profile_type is an array
+        if (!is_array($profileType)) {
+            $profileType = json_decode($profileType, true) ?? [];
+        }
+
         $this->data = [
-            'name' => auth()->user()->name,
-            'email' => auth()->user()->email,
-            'country' => auth()->user()->country,
-            'currency' => auth()->user()->currency,
+            'name' => $user->name,
+            'email' => $user->email,
+            'country' => $user->country,
+            'currency' => $user->currency,
+            'profile_type' => $profileType,
             'current_password' => null,
             'new_password' => null,
             'new_password_confirmation' => null,

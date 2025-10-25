@@ -14,6 +14,11 @@ class RecentActivity extends BaseWidget
 
     protected int | string | array $columnSpan = 'full';
 
+    public function isCollapsible(): bool
+    {
+        return true;
+    }
+
     protected function formatAmount($value)
     {
         $currency = auth()->user()->currency ? auth()->user()->currency : 'usd';

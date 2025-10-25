@@ -10,6 +10,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Support\Facades\Storage;
+use App\Models\EmploymentHistory;
 
 class User extends Authenticatable implements FilamentUser
 {
@@ -29,6 +30,7 @@ class User extends Authenticatable implements FilamentUser
         'about',
         'country',
         'currency',
+        'profile_type',
         'password',
     ];
 
@@ -50,6 +52,7 @@ class User extends Authenticatable implements FilamentUser
     protected $casts = [
         'email_verified_at' => 'datetime',
         'birthday' => 'date',
+        'profile_type' => 'array',
     ];
 
     /**
@@ -93,6 +96,84 @@ class User extends Authenticatable implements FilamentUser
     public function expenses(): HasMany
     {
         return $this->hasMany(Expense::class);
+    }
+
+    /**
+     * Get the employment history for the user.
+     *
+     * @return HasMany
+     */
+    public function employmentHistory(): HasMany
+    {
+        return $this->hasMany(EmploymentHistory::class);
+    }
+
+    /**
+     * Get the current employment for the user.
+     *
+     * @return HasMany
+     */
+    public function currentEmployment(): HasMany
+    {
+        return $this->hasMany(EmploymentHistory::class)->where('is_current', true);
+    }
+
+    /**
+     * Get the user's profile type label (first one if multiple).
+     *
+     * @return string
+     */
+    public function getProfileTypeLabel(): string
+    {
+        if (!is_array($this->profile_type) || empty($this->profile_type)) {
+            return 'Not Specified';
+        }
+
+        $firstType = $this->profile_type[0];
+        return match($firstType) {
+            'student' => 'Student',
+            'employee' => 'Employee',
+            'business_owner' => 'Business Owner',
+            'freelancer' => 'Freelancer',
+            default => 'Not Specified'
+        };
+    }
+
+    /**
+     * Get the user's profile type labels.
+     *
+     * @return array
+     */
+    public function getProfileTypeLabels(): array
+    {
+        if (!is_array($this->profile_type)) {
+            return ['Not Specified'];
+        }
+
+        return array_map(function($type) {
+            return match($type) {
+                'student' => 'Student',
+                'employee' => 'Employee',
+                'business_owner' => 'Business Owner',
+                'freelancer' => 'Freelancer',
+                default => 'Not Specified'
+            };
+        }, $this->profile_type);
+    }
+
+    /**
+     * Get available profile type options.
+     *
+     * @return array
+     */
+    public static function getProfileTypeOptions(): array
+    {
+        return [
+            'student' => 'Student',
+            'employee' => 'Employee',
+            'business_owner' => 'Business Owner',
+            'freelancer' => 'Freelancer',
+        ];
     }
 
     public function canAccessPanel(\Filament\Panel $panel): bool

@@ -6,6 +6,7 @@ use App\Scopes\UserVisibilityScope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 final class Category extends Model
 {
@@ -19,6 +20,8 @@ final class Category extends Model
     protected $fillable = [
         'user_id',
         'name',
+        'description',
+        'color',
         'is_active',
     ];
 

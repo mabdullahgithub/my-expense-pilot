@@ -3,17 +3,19 @@
 namespace App\Filament\Resources\CategoryResource\Pages;
 
 use App\Filament\Resources\CategoryResource;
+use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
-// use Illuminate\Database\Eloquent\Builder;
-// use App\Models\Category;
 
 class ListCategories extends ListRecords
 {
     protected static string $resource = CategoryResource::class;
 
-    // Not Required
-    // protected function getTableQuery(): Builder
-    // {
-    //     return Category::query()->where('user_id', auth()->id());
-    // }
+    protected function getHeaderActions(): array
+    {
+        return [
+            Actions\CreateAction::make()
+                ->label('New Category')
+                ->icon('heroicon-o-plus'),
+        ];
+    }
 }
