@@ -36,12 +36,12 @@ class Profile extends Page
 
     public function mount(): void
     {
-        $this->content->fill([
+        $this->data = [
             'name' => auth()->user()->name,
             'email' => auth()->user()->email,
             'country' => auth()->user()->country,
             'currency' => auth()->user()->currency,
-        ]);
+        ];
     }
 
     public function content(Schema $schema): Schema
@@ -142,29 +142,28 @@ class Profile extends Page
 
     public function save(): void
     {
-        $data = $this->content->getState();
+        $data = $this->data;
 
         $state = array_filter([
-            'name' => $data['name'],
-            'email' => $data['email'],
-            'password' => $data['new_password'] ? Hash::make($data['new_password']) : null,
-            'country' => $data['country'],
-            'currency' => $data['currency'],
+            'name' => $data['name'] ?? null,
+            'email' => $data['email'] ?? null,
+            'password' => !empty($data['new_password']) ? Hash::make($data['new_password']) : null,
+            'country' => $data['country'] ?? null,
+            'currency' => $data['currency'] ?? null,
         ]);
 
         auth()->user()->update($state);
 
-        $this->content->fill([
+        // Reload the form with updated data
+        $this->data = [
             'name' => auth()->user()->name,
             'email' => auth()->user()->email,
             'country' => auth()->user()->country,
             'currency' => auth()->user()->currency,
-        ]);
-
-        // Clear password fields
-        $this->data['current_password'] = null;
-        $this->data['new_password'] = null;
-        $this->data['new_password_confirmation'] = null;
+            'current_password' => null,
+            'new_password' => null,
+            'new_password_confirmation' => null,
+        ];
 
         \Filament\Notifications\Notification::make()
             ->title('Profile updated successfully')
