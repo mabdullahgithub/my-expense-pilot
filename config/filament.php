@@ -204,7 +204,7 @@ return [
             ],
         ],
         'sidebar' => [
-            'is_collapsible_on_desktop' => true,
+            'is_collapsible_on_desktop' => false,
         ],
         'notifications' => [
             'vertical_alignment' => 'top',

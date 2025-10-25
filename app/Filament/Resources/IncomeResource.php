@@ -5,7 +5,8 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\IncomeResource\Pages;
 use App\Models\Income;
 use App\Models\Category;
-use Filament\Schemas\Components as FormComponents;
+use Filament\Forms\Components;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Actions;
 use Filament\Tables\Columns;
@@ -33,24 +34,24 @@ class IncomeResource extends Resource
     {
         return $schema
             ->schema([
-                FormComponents\Section::make()
+                Section::make()
                     ->schema([
-                        FormComponents\TextInput::make('title')
+                        Components\TextInput::make('title')
                             ->required()
                             ->maxLength(255),
-                        FormComponents\Textarea::make('description')
+                        Components\Textarea::make('description')
                             ->maxLength(65535)
                             ->columnSpanFull(),
-                        FormComponents\TextInput::make('amount')
+                        Components\TextInput::make('amount')
                             ->required()
                             ->numeric()
                             ->prefix('$'),
-                        FormComponents\Select::make('category_id')
+                        Components\Select::make('category_id')
                             ->label('Category')
                             ->options(Category::where('is_active', true)->pluck('name', 'id'))
                             ->searchable()
                             ->required(),
-                        FormComponents\DateTimePicker::make('entry_date')
+                        Components\DateTimePicker::make('entry_date')
                             ->required()
                             ->default(now()),
                     ])

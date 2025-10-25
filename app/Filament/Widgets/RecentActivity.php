@@ -10,6 +10,8 @@ use Squire\Models\Currency;
 
 class RecentActivity extends BaseWidget
 {
+    protected static ?int $sort = 2;
+
     protected int | string | array $columnSpan = 'full';
 
     protected function formatAmount($value)
@@ -45,8 +47,7 @@ class RecentActivity extends BaseWidget
                     ->label('Amount'),
                 Columns\TextColumn::make('subject.entry_date')
                     ->label('Date')
-                    ->date()
-                    ->sortable(),
+                    ->date(),
             ])
             ->paginated(false);
     }

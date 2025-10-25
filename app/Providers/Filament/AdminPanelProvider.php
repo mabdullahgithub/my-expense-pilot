@@ -44,6 +44,8 @@ class AdminPanelProvider extends PanelProvider
                 'Income/Expense',
                 'Miscellaneous',
             ])
+            ->sidebarCollapsibleOnDesktop()
+            ->topbar(false)
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,

@@ -10,6 +10,8 @@ use Squire\Models\Currency;
 
 class StatsOverview extends BaseWidget
 {
+    protected static ?int $sort = 1;
+
     protected float $total_income = 0;
     protected float $total_expense = 0;
     protected float $total_revenue = 0;
@@ -27,11 +29,17 @@ class StatsOverview extends BaseWidget
         $this->total_revenue = $this->total_income - $this->total_expense;
 
         return [
-            Stat::make('Total Income', $this->formatAmount($this->total_income)),
-            Stat::make('Total Expense', $this->formatAmount($this->total_expense)),
+            Stat::make('Total Income', $this->formatAmount($this->total_income))
+                ->description('Total income earned')
+                ->descriptionIcon('heroicon-m-arrow-trending-up')
+                ->color('success'),
+            Stat::make('Total Expense', $this->formatAmount($this->total_expense))
+                ->description('Total expenses incurred')
+                ->descriptionIcon('heroicon-m-arrow-trending-down')
+                ->color('danger'),
             Stat::make('Total Revenue', $this->formatAmount($this->total_revenue))
                 ->description($this->total_revenue > 0 ? 'Profit' : 'Loss')
-                ->descriptionIcon($this->total_revenue > 0 ? 'heroicon-s-arrow-trending-up' : 'heroicon-s-arrow-trending-down')
+                ->descriptionIcon($this->total_revenue > 0 ? 'heroicon-m-arrow-trending-up' : 'heroicon-m-arrow-trending-down')
                 ->color($this->total_revenue > 0 ? 'success' : 'danger'),
         ];
     }
