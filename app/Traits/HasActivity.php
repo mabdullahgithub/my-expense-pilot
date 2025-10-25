@@ -16,13 +16,20 @@ trait HasActivity
     public static function bootHasActivity(): void
     {
         static::created(function($model) {
-            $model->activity()->create([
-                'user_id' => Auth::id(),
-            ]);
+            // Only create activity if we have a user_id (either from Auth or model)
+            $userId = Auth::id() ?? $model->user_id ?? null;
+            
+            if ($userId) {
+                $model->activity()->create([
+                    'user_id' => $userId,
+                ]);
+            }
         });
 
         static::deleting(function($model) {
-            $model->activity->delete();
+            if ($model->activity) {
+                $model->activity->delete();
+            }
         });
     }
 

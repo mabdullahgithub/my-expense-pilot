@@ -2,18 +2,14 @@
 
 namespace App\Filament\Widgets;
 
-use Filament\Tables;
-use Filament\Widgets\Widget;
-use Illuminate\Database\Eloquent\Builder;
+use Filament\Tables\Columns;
+use Filament\Tables\Table;
+use Filament\Widgets\TableWidget as BaseWidget;
 use App\Models\Activity;
 use Squire\Models\Currency;
 
-class RecentActivity extends Widget implements Tables\Contracts\HasTable
+class RecentActivity extends BaseWidget
 {
-    use Tables\Concerns\InteractsWithTable;
-
-    protected static string $view = 'filament.widgets.recent-activity';
-
     protected int | string | array $columnSpan = 'full';
 
     protected function formatAmount($value)
@@ -22,40 +18,36 @@ class RecentActivity extends Widget implements Tables\Contracts\HasTable
         return Currency::find($currency)->format($value, true);
     }
 
-    protected function getTableQuery(): Builder
+    public function table(Table $table): Table
     {
-        return Activity::latest()->take(10);
-    }
-
-    protected function getTableColumns(): array
-    {
-        return [
-            Tables\Columns\TextColumn::make('subject.title')
-                ->label('Title'),
-            Tables\Columns\BadgeColumn::make('subject_type')
-                ->enum([
-                    'expense' => 'Expense',
-                    'income' => 'Income',
-                ])
-                ->colors([
-                    'danger' => 'expense',
-                    'success' => 'income',
-                ])
-                ->label('Type'),
-            Tables\Columns\TextColumn::make('subject.category.name')
-                ->label('Category'),
-            Tables\Columns\TextColumn::make('subject.amount')
-                // ->extraAttributes(['class' => 'text-right'])
-                ->getStateUsing(fn ($record): string => $this->formatAmount($record->subject->amount))
-                ->label('Amount'),
-            Tables\Columns\TextColumn::make('subject.entry_date')
-                ->label('Entry Date')
-                ->date(),
-        ];
-    }
-
-    protected function isTablePaginationEnabled(): bool
-    {
-        return false;
+        return $table
+            ->query(Activity::latest()->take(10))
+            ->columns([
+                Columns\TextColumn::make('subject.title')
+                    ->label('Title'),
+                Columns\TextColumn::make('subject_type')
+                    ->badge()
+                    ->formatStateUsing(fn (string $state): string => match ($state) {
+                        'expense' => 'Expense',
+                        'income' => 'Income',
+                        default => ucfirst($state),
+                    })
+                    ->color(fn (string $state): string => match ($state) {
+                        'expense' => 'danger',
+                        'income' => 'success',
+                        default => 'gray',
+                    })
+                    ->label('Type'),
+                Columns\TextColumn::make('subject.category.name')
+                    ->label('Category'),
+                Columns\TextColumn::make('subject.amount')
+                    ->formatStateUsing(fn ($record): string => $this->formatAmount($record->subject->amount))
+                    ->label('Amount'),
+                Columns\TextColumn::make('subject.entry_date')
+                    ->label('Date')
+                    ->date()
+                    ->sortable(),
+            ])
+            ->paginated(false);
     }
 }

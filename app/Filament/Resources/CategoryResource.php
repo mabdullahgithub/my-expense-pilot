@@ -4,12 +4,13 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\CategoryResource\Pages;
 use App\Models\Category;
-use Filament\Forms;
-use Filament\Resources\Form;
-use Filament\Resources\Resource;
-use Filament\Resources\Table;
-use Filament\Tables;
+use Filament\Schemas\Components as FormComponents;
+use Filament\Schemas\Schema;
+use Filament\Actions;
+use Filament\Tables\Columns;
+use Filament\Tables\Table;
 use Filament\Tables\Filters\Filter;
+use Filament\Resources\Resource;
 use Illuminate\Database\Eloquent\Builder;
 
 class CategoryResource extends Resource
@@ -18,20 +19,26 @@ class CategoryResource extends Resource
 
     protected static ?string $recordTitleAttribute = 'name';
 
-    protected static ?string $navigationIcon = 'heroicon-o-collection';
-
-    protected static ?string $navigationGroup = 'Miscellaneous';
-
-    public static function form(Form $form): Form
+    public static function getNavigationIcon(): ?string
     {
-        return $form
+        return 'heroicon-o-squares-2x2';
+    }
+
+    public static function getNavigationGroup(): ?string
+    {
+        return 'Miscellaneous';
+    }
+
+    public static function form(Schema $schema): Schema
+    {
+        return $schema
             ->schema([
-                Forms\Components\Card::make()
+                FormComponents\Section::make()
                     ->schema([
-                        Forms\Components\TextInput::make('name')
+                        FormComponents\TextInput::make('name')
                             ->required()
                             ->maxLength(255),
-                        Forms\Components\Toggle::make('is_active')
+                        FormComponents\Toggle::make('is_active')
                             ->label('Active')
                             ->inline(false)
                             ->required(),
@@ -40,12 +47,12 @@ class CategoryResource extends Resource
                         'sm' => 1,
                     ])
                     ->columnSpan(2),
-                Forms\Components\Card::make()
+                FormComponents\Section::make()
                     ->schema([
-                        Forms\Components\Placeholder::make('created_at')
+                        FormComponents\Placeholder::make('created_at')
                             ->label('Created at')
                             ->content(fn (?Category $record): string => $record ? $record->created_at->diffForHumans() : '-'),
-                        Forms\Components\Placeholder::make('updated_at')
+                        FormComponents\Placeholder::make('updated_at')
                             ->label('Last modified at')
                             ->content(fn (?Category $record): string => $record ? $record->updated_at->diffForHumans() : '-'),
                     ])
@@ -58,22 +65,32 @@ class CategoryResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('name')
+                Columns\TextColumn::make('name')
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\BooleanColumn::make('is_active')->label('Status')
+                Columns\IconColumn::make('is_active')->label('Status')
+                    ->boolean()
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('created_at')
+                Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('updated_at')
+                Columns\TextColumn::make('updated_at')
                     ->dateTime()
                     ->sortable(),
             ])
             ->filters([
                 Filter::make('is_active')
                     ->query(fn (Builder $query): Builder => $query->where('is_active', true))
+            ])
+            ->actions([
+                Actions\EditAction::make(),
+                Actions\DeleteAction::make(),
+            ])
+            ->bulkActions([
+                Actions\BulkActionGroup::make([
+                    Actions\DeleteBulkAction::make(),
+                ]),
             ]);
     }
 

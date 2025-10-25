@@ -2,41 +2,41 @@
 
 namespace App\Filament\Pages;
 
-use Filament\Forms;
-use Filament\Forms\Concerns\InteractsWithForms;
-use Filament\Forms\Contracts\HasForms;
+use Filament\Actions\Action;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
 use Filament\Pages\Page;
+use Filament\Schemas\Components\Actions;
+use Filament\Schemas\Components\Component;
+use Filament\Schemas\Components\EmbeddedSchema;
+use Filament\Schemas\Components\Form;
+use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
+use Filament\Support\Enums\Alignment;
 use Illuminate\Support\Facades\Hash;
 use Squire\Models\Currency;
 use Squire\Models\Country;
 
-class Profile extends Page implements HasForms
+class Profile extends Page
 {
-    use InteractsWithForms;
+    protected string $view = 'filament.pages.profile';
 
-    protected static ?string $navigationIcon = 'heroicon-o-user';
-
-    protected static ?string $navigationGroup = 'Account';
-
-    protected static string $view = 'filament.pages.profile';
-
-    public $name;
-
-    public $email;
-
-    public $country;
-
-    public $currency;
-
-    public $current_password;
-
-    public $new_password;
-
-    public $new_password_confirmation;
-
-    public function mount()
+    public static function getNavigationIcon(): ?string
     {
-        $this->form->fill([
+        return 'heroicon-o-user';
+    }
+
+    public static function getNavigationGroup(): ?string
+    {
+        return 'Account';
+    }
+
+    public ?array $data = [];
+
+    public function mount(): void
+    {
+        $this->content->fill([
             'name' => auth()->user()->name,
             'email' => auth()->user()->email,
             'country' => auth()->user()->country,
@@ -44,91 +44,138 @@ class Profile extends Page implements HasForms
         ]);
     }
 
-    public function submit()
+    public function content(Schema $schema): Schema
     {
-        $this->form->getState();
+        return $schema
+            ->components([
+                $this->getFormContentComponent(),
+            ]);
+    }
+
+    public function getFormContentComponent(): Component
+    {
+        return Form::make([EmbeddedSchema::make('form')])
+            ->id('form')
+            ->livewireSubmitHandler('save')
+            ->footer([
+                Actions::make($this->getFormActions())
+                    ->alignment($this->getFormActionsAlignment())
+                    ->fullWidth($this->hasFullWidthFormActions())
+                    ->key('form-actions'),
+            ]);
+    }
+
+    public function form(Schema $schema): Schema
+    {
+        return $schema
+            ->model(auth()->user())
+            ->statePath('data')
+            ->components([
+                Section::make('Personal Information')
+                    ->columns(2)
+                    ->schema([
+                        TextInput::make('name')
+                            ->required(),
+                        TextInput::make('email')
+                            ->label('Email Address')
+                            ->required(),
+                    ]),
+                Section::make('Configuration')
+                    ->schema([
+                        Select::make('currency')
+                            ->options(Currency::all()->pluck('name', 'id'))
+                            ->searchable()
+                            ->preload(),
+                        Select::make('country')
+                            ->options(Country::all()->pluck('name', 'id'))
+                            ->searchable()
+                            ->preload(),
+                    ])
+                    ->columns(2),
+                Section::make('Update Password')
+                    ->columns(2)
+                    ->schema([
+                        TextInput::make('current_password')
+                            ->label('Current Password')
+                            ->password()
+                            ->rules(['required_with:new_password'])
+                            ->currentPassword()
+                            ->autocomplete('off')
+                            ->columnSpan(1),
+                        Grid::make()
+                            ->schema([
+                                TextInput::make('new_password')
+                                    ->label('New Password')
+                                    ->password()
+                                    ->rules(['confirmed'])
+                                    ->autocomplete('new-password'),
+                                TextInput::make('new_password_confirmation')
+                                    ->label('Confirm Password')
+                                    ->password()
+                                    ->rules([
+                                        'required_with:new_password',
+                                    ])
+                                    ->autocomplete('new-password'),
+                            ]),
+                    ]),
+            ]);
+    }
+
+    protected function getFormActions(): array
+    {
+        return [
+            Action::make('save')
+                ->label('Save Profile')
+                ->submit('save'),
+        ];
+    }
+
+    protected function hasFullWidthFormActions(): bool
+    {
+        return false;
+    }
+
+    public function getFormActionsAlignment(): string | Alignment
+    {
+        return Alignment::Start;
+    }
+
+    public function save(): void
+    {
+        $data = $this->content->getState();
 
         $state = array_filter([
-            'name' => $this->name,
-            'email' => $this->email,
-            'password' => $this->new_password ? Hash::make($this->new_password) : null,
-            'country' => $this->country,
-            'currency' => $this->currency,
+            'name' => $data['name'],
+            'email' => $data['email'],
+            'password' => $data['new_password'] ? Hash::make($data['new_password']) : null,
+            'country' => $data['country'],
+            'currency' => $data['currency'],
         ]);
 
         auth()->user()->update($state);
 
-        $this->reset(['current_password', 'new_password', 'new_password_confirmation']);
-        $this->notify('success', 'Your profile has been updated.');
+        $this->content->fill([
+            'name' => auth()->user()->name,
+            'email' => auth()->user()->email,
+            'country' => auth()->user()->country,
+            'currency' => auth()->user()->currency,
+        ]);
+
+        // Clear password fields
+        $this->data['current_password'] = null;
+        $this->data['new_password'] = null;
+        $this->data['new_password_confirmation'] = null;
+
+        \Filament\Notifications\Notification::make()
+            ->title('Profile updated successfully')
+            ->success()
+            ->send();
     }
 
-    public function getCancelButtonUrlProperty()
-    {
-        return static::getUrl();
-    }
-
-    protected function getBreadcrumbs(): array
+    public function getBreadcrumbs(): array
     {
         return [
             url()->current() => 'Profile',
-        ];
-    }
-
-    protected function getFormSchema(): array
-    {
-        return [
-            Forms\Components\Section::make('Personal Information')
-                ->columns(2)
-                ->schema([
-                    Forms\Components\TextInput::make('name')
-                        ->required(),
-                    Forms\Components\TextInput::make('email')
-                        ->label('Email Address')
-                        ->required(),
-                ])
-                ->extraAttributes(['class' => 'bg-white dark:bg-gray-800']),
-            Forms\Components\Section::make('Configuration')
-                ->columns(2)
-                ->schema([
-                    Forms\Components\Select::make('currency')
-                        ->searchable()
-                        ->getSearchResultsUsing(fn (string $query) => Currency::where('name', 'like', "%{$query}%")->pluck('name', 'id'))
-                        ->getOptionLabelUsing(fn ($value): ?string => Currency::find($value)?->name)
-                        ->required(),
-                    Forms\Components\Select::make('country')
-                        ->searchable()
-                        ->getSearchResultsUsing(fn (string $query) => Country::where('name', 'like', "%{$query}%")->pluck('name', 'id'))
-                        ->getOptionLabelUsing(fn ($value): ?string => Country::find($value)?->name)
-                        ->required(),
-                ])
-                ->extraAttributes(['class' => 'bg-white dark:bg-gray-800']),
-            Forms\Components\Section::make('Update Password')
-                ->columns(2)
-                ->schema([
-                    Forms\Components\TextInput::make('current_password')
-                        ->label('Current Password')
-                        ->password()
-                        ->rules(['required_with:new_password'])
-                        ->currentPassword()
-                        ->autocomplete('off')
-                        ->columnSpan(1),
-                    Forms\Components\Grid::make()
-                        ->schema([
-                            Forms\Components\TextInput::make('new_password')
-                                ->label('New Password')
-                                ->password()
-                                ->rules(['confirmed'])
-                                ->autocomplete('new-password'),
-                            Forms\Components\TextInput::make('new_password_confirmation')
-                                ->label('Confirm Password')
-                                ->password()
-                                ->rules([
-                                    'required_with:new_password',
-                                ])
-                                ->autocomplete('new-password'),
-                        ]),
-                ])
-                ->extraAttributes(['class' => 'bg-white dark:bg-gray-800']),
         ];
     }
 }

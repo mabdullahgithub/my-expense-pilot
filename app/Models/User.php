@@ -95,7 +95,7 @@ class User extends Authenticatable implements FilamentUser
         return $this->hasMany(Expense::class);
     }
 
-    public function canAccessFilament(): bool
+    public function canAccessPanel(\Filament\Panel $panel): bool
     {
         // return str_ends_with($this->email, '@yourdomain.com') && $this->hasVerifiedEmail();
         return true;
