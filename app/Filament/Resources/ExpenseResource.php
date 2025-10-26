@@ -53,7 +53,8 @@ class ExpenseResource extends Resource
                             ->required(),
                         Components\DateTimePicker::make('entry_date')
                             ->required()
-                            ->default(now()),
+                            ->default(now())
+                            ->native(false),
                     ])
                     ->columns(2),
             ]);

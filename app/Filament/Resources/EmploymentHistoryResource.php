@@ -103,11 +103,13 @@ class EmploymentHistoryResource extends Resource
                     ->schema([
                         Components\DatePicker::make('start_date')
                             ->label('Start Date')
-                            ->required(),
-                        
+                            ->required()
+                            ->native(false),
+
                         Components\DatePicker::make('end_date')
                             ->label('End Date')
-                            ->nullable(),
+                            ->nullable()
+                            ->native(false),
                     ])
                     ->columns(2),
 

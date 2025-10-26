@@ -45,7 +45,8 @@ class IncomesRelationManager extends RelationManager
                             ->required(),
                         Components\DateTimePicker::make('entry_date')
                             ->required()
-                            ->default(now()),
+                            ->default(now())
+                            ->native(false),
                     ])
                     ->columns(2),
             ]);

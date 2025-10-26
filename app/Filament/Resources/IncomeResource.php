@@ -71,7 +71,8 @@ class IncomeResource extends Resource
                             ->helperText('Select the position/employment from which this income was received (optional)'),
                         Components\DateTimePicker::make('entry_date')
                             ->required()
-                            ->default(now()),
+                            ->default(now())
+                            ->native(false),
                     ])
                     ->columns(2),
             ]);
