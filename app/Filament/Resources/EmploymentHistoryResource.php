@@ -13,6 +13,9 @@ use Filament\Actions;
 use Filament\Tables\Columns;
 use Filament\Tables\Table;
 use Filament\Resources\Resource;
+use Filament\Infolists\Infolist;
+use Filament\Infolists\Components as InfoComponents;
+use Filament\Support\Enums\FontWeight;
 use Illuminate\Database\Eloquent\Builder;
 
 class EmploymentHistoryResource extends Resource
@@ -128,87 +131,180 @@ class EmploymentHistoryResource extends Resource
     {
         return $table
             ->columns([
-                Columns\TextColumn::make('profile_type')
-                    ->label('Profile Type')
-                    ->formatStateUsing(fn (string $state): string => match ($state) {
-                        'student' => 'Student',
-                        'employee' => 'Employee',
-                        'business_owner' => 'Business Owner',
-                        'freelancer' => 'Freelancer',
-                        default => $state,
-                    })
-                    ->badge()
-                    ->color(fn (string $state): string => match ($state) {
-                        'student' => 'info',
-                        'employee' => 'success',
-                        'business_owner' => 'warning',
-                        'freelancer' => 'purple',
-                        default => 'gray',
-                    })
-                    ->sortable(),
+                Columns\Layout\Stack::make([
+                    // Header Section - Company & Position
+                    Columns\Layout\Split::make([
+                        Columns\Layout\Stack::make([
+                            Columns\TextColumn::make('company_name')
+                                ->weight(FontWeight::Bold)
+                                ->size('lg')
+                                ->icon('heroicon-o-building-office-2')
+                                ->iconColor('primary')
+                                ->searchable()
+                                ->sortable(),
 
-                Columns\TextColumn::make('company_name')
-                    ->label('Company')
-                    ->searchable()
-                    ->sortable(),
+                            Columns\TextColumn::make('position')
+                                ->size('md')
+                                ->color('gray')
+                                ->weight(FontWeight::Medium)
+                                ->icon('heroicon-o-briefcase')
+                                ->iconColor('gray')
+                                ->searchable()
+                                ->sortable(),
+                        ])->space(1),
 
-                Columns\TextColumn::make('position')
-                    ->label('Position')
-                    ->searchable()
-                    ->sortable(),
-                
-                Columns\TextColumn::make('employment_type')
-                    ->label('Type')
-                    ->formatStateUsing(fn (string $state): string => match ($state) {
-                        'full_time' => 'Full Time',
-                        'part_time' => 'Part Time',
-                        'contract' => 'Contract',
-                        'internship' => 'Internship',
-                        'freelance' => 'Freelance',
-                        default => $state,
-                    })
-                    ->sortable(),
-                
-                Columns\TextColumn::make('salary')
-                    ->label('Salary')
-                    ->money('USD')
-                    ->sortable()
-                    ->toggleable(),
+                        Columns\TextColumn::make('is_current')
+                            ->formatStateUsing(fn ($state): string => $state ? 'Current' : '')
+                            ->badge()
+                            ->color('success')
+                            ->icon('heroicon-o-check-badge')
+                            ->visible(fn ($state): bool => (bool) $state)
+                            ->grow(false),
+                    ])->from('md'),
 
-                Columns\TextColumn::make('incomes_sum_amount')
-                    ->label('Total Income Earned')
-                    ->sum('incomes', 'amount')
-                    ->money('USD')
-                    ->sortable()
-                    ->placeholder('$0.00'),
+                    Columns\Layout\View::make('filament.tables.columns.divider'),
 
-                Columns\TextColumn::make('start_date')
-                    ->label('Start Date')
-                    ->date()
-                    ->sortable(),
-                
-                Columns\TextColumn::make('end_date')
-                    ->label('End Date')
-                    ->date()
-                    ->placeholder('Current')
-                    ->sortable(),
-                
-                Columns\IconColumn::make('is_current')
-                    ->label('Current')
-                    ->boolean()
-                    ->sortable(),
+                    // Profile & Employment Type
+                    Columns\Layout\Split::make([
+                        Columns\TextColumn::make('profile_type')
+                            ->label('Profile')
+                            ->formatStateUsing(fn (string $state): string => match ($state) {
+                                'student' => 'Student',
+                                'employee' => 'Employee',
+                                'business_owner' => 'Business Owner',
+                                'freelancer' => 'Freelancer',
+                                default => $state,
+                            })
+                            ->badge()
+                            ->size('md')
+                            ->icon(fn (string $state): string => match ($state) {
+                                'student' => 'heroicon-o-academic-cap',
+                                'employee' => 'heroicon-o-building-office',
+                                'business_owner' => 'heroicon-o-building-storefront',
+                                'freelancer' => 'heroicon-o-user',
+                                default => 'heroicon-o-user',
+                            })
+                            ->color(fn (string $state): string => match ($state) {
+                                'student' => 'info',
+                                'employee' => 'success',
+                                'business_owner' => 'warning',
+                                'freelancer' => 'purple',
+                                default => 'gray',
+                            }),
+
+                        Columns\TextColumn::make('employment_type')
+                            ->label('Type')
+                            ->formatStateUsing(fn (string $state): string => match ($state) {
+                                'full_time' => 'Full Time',
+                                'part_time' => 'Part Time',
+                                'contract' => 'Contract',
+                                'internship' => 'Internship',
+                                'freelance' => 'Freelance',
+                                default => $state,
+                            })
+                            ->badge()
+                            ->size('md')
+                            ->color('gray')
+                            ->icon('heroicon-o-clock'),
+                    ]),
+
+                    Columns\Layout\View::make('filament.tables.columns.divider'),
+
+                    // Duration Section
+                    Columns\Layout\Grid::make(2)
+                        ->schema([
+                            Columns\Layout\Stack::make([
+                                Columns\TextColumn::make('start_date')
+                                    ->label('Start Date')
+                                    ->date('M d, Y')
+                                    ->icon('heroicon-o-calendar')
+                                    ->iconColor('success')
+                                    ->weight(FontWeight::SemiBold)
+                                    ->sortable(),
+                            ]),
+
+                            Columns\Layout\Stack::make([
+                                Columns\TextColumn::make('end_date')
+                                    ->label('End Date')
+                                    ->date('M d, Y')
+                                    ->icon('heroicon-o-calendar-days')
+                                    ->iconColor('danger')
+                                    ->placeholder('Present')
+                                    ->weight(FontWeight::SemiBold)
+                                    ->sortable(),
+                            ]),
+                        ]),
+
+                    Columns\Layout\View::make('filament.tables.columns.divider'),
+
+                    // Financial Overview
+                    Columns\Layout\Split::make([
+                        Columns\Layout\Stack::make([
+                            Columns\TextColumn::make('salary_display')
+                                ->label('Salary')
+                                ->formatStateUsing(function ($record): string {
+                                    if (!$record->salary) {
+                                        return 'Not specified';
+                                    }
+                                    $salary = '$' . number_format($record->salary, 2);
+                                    if ($record->salary_frequency) {
+                                        $frequency = match ($record->salary_frequency) {
+                                            'hourly' => '/hr',
+                                            'monthly' => '/mo',
+                                            'yearly' => '/yr',
+                                            default => '',
+                                        };
+                                        $salary .= ' ' . $frequency;
+                                    }
+                                    return $salary;
+                                })
+                                ->icon('heroicon-o-banknotes')
+                                ->iconColor('warning')
+                                ->color(fn ($record): string => $record->salary ? 'warning' : 'gray')
+                                ->weight(fn ($record): FontWeight => $record->salary ? FontWeight::Bold : FontWeight::Medium)
+                                ->size('sm'),
+                        ]),
+
+                        Columns\Layout\Stack::make([
+                            Columns\TextColumn::make('incomes_sum_amount')
+                                ->label('Total Earned')
+                                ->sum('incomes', 'amount')
+                                ->money('USD')
+                                ->icon('heroicon-o-currency-dollar')
+                                ->iconColor('success')
+                                ->color('success')
+                                ->weight(FontWeight::Bold)
+                                ->size('sm')
+                                ->placeholder('$0.00'),
+                        ]),
+                    ]),
+
+                    // Description (if exists)
+                    Columns\TextColumn::make('description')
+                        ->label('Description')
+                        ->limit(120)
+                        ->wrap()
+                        ->size('xs')
+                        ->color('gray')
+                        ->icon('heroicon-o-document-text')
+                        ->iconColor('gray')
+                        ->visible(fn ($state): bool => !empty($state))
+                        ->extraAttributes(['class' => 'italic']),
+
+                ])->space(2),
             ])
-            ->filters([
-                //
+            ->contentGrid([
+                'md' => 2,
+                'xl' => 3,
             ])
+            ->paginated(false)
             ->actions([
-                Actions\EditAction::make(),
-                Actions\DeleteAction::make(),
-            ])
-            ->bulkActions([
-                Actions\BulkActionGroup::make([
-                    Actions\DeleteBulkAction::make(),
-                ]),
+                Actions\EditAction::make()
+                    ->iconButton()
+                    ->tooltip('Edit Employment'),
+                Actions\DeleteAction::make()
+                    ->iconButton()
+                    ->tooltip('Delete Employment'),
             ])
             ->defaultSort('start_date', 'desc');
     }

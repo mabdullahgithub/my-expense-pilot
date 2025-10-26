@@ -39,11 +39,11 @@ class Profile extends Page
     public function mount(): void
     {
         $user = auth()->user();
-        $profileType = $user->profile_type;
 
-        // Ensure profile_type is an array
+        // Ensure profile_type is always an array
+        $profileType = $user->profile_type;
         if (!is_array($profileType)) {
-            $profileType = json_decode($profileType, true) ?? [];
+            $profileType = !empty($profileType) ? [$profileType] : [];
         }
 
         $this->data = [
@@ -163,24 +163,34 @@ class Profile extends Page
     {
         $data = $this->data;
 
-        $state = array_filter([
+        // Prepare state, excluding null/empty values except for arrays
+        $state = [
             'name' => $data['name'] ?? null,
             'email' => $data['email'] ?? null,
-            'password' => !empty($data['new_password']) ? Hash::make($data['new_password']) : null,
             'country' => $data['country'] ?? null,
             'currency' => $data['currency'] ?? null,
-            'profile_type' => $data['profile_type'] ?? null,
-        ]);
+            'profile_type' => $data['profile_type'] ?? [],
+        ];
+
+        // Only add password if it's being changed
+        if (!empty($data['new_password'])) {
+            $state['password'] = Hash::make($data['new_password']);
+        }
+
+        // Remove null values except for profile_type
+        $state = array_filter($state, function($value, $key) {
+            return $value !== null || $key === 'profile_type';
+        }, ARRAY_FILTER_USE_BOTH);
 
         auth()->user()->update($state);
 
         // Reload the form with updated data
         $user = auth()->user()->fresh();
-        $profileType = $user->profile_type;
 
-        // Ensure profile_type is an array
+        // Ensure profile_type is always an array
+        $profileType = $user->profile_type;
         if (!is_array($profileType)) {
-            $profileType = json_decode($profileType, true) ?? [];
+            $profileType = !empty($profileType) ? [$profileType] : [];
         }
 
         $this->data = [
