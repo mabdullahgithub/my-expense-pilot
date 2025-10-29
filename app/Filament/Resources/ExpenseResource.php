@@ -34,29 +34,35 @@ class ExpenseResource extends Resource
     {
         return $schema
             ->schema([
-                Section::make()
+                Section::make('Expense Information')
+                    ->columns(2)
                     ->schema([
                         Components\TextInput::make('title')
                             ->required()
                             ->maxLength(255),
-                        Components\Textarea::make('description')
-                            ->maxLength(65535)
-                            ->columnSpanFull(),
+
                         Components\TextInput::make('amount')
                             ->required()
                             ->numeric()
                             ->prefix('$'),
+
                         Components\Select::make('category_id')
                             ->label('Category')
                             ->options(Category::where('is_active', true)->pluck('name', 'id'))
                             ->searchable()
-                            ->required(),
+                            ->required()
+                            ->preload(),
+
                         Components\DateTimePicker::make('entry_date')
+                            ->label('Entry Date')
                             ->required()
                             ->default(now())
                             ->native(false),
-                    ])
-                    ->columns(2),
+
+                        Components\Textarea::make('description')
+                            ->maxLength(65535)
+                            ->columnSpanFull(),
+                    ]),
             ]);
     }
 

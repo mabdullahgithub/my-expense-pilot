@@ -17,6 +17,8 @@ class IncomeExpenseChart extends ChartWidget
 
     protected static bool $isLazy = false;
 
+    protected ?string $maxHeight = '245px';
+
     public function isCollapsible(): bool
     {
         return true;

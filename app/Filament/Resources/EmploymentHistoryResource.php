@@ -41,6 +41,7 @@ class EmploymentHistoryResource extends Resource
         return $schema
             ->schema([
                 Section::make('Employment Details')
+                    ->columns(2)
                     ->schema([
                         Components\Select::make('profile_type')
                             ->label('Profile Type')
@@ -80,27 +81,7 @@ class EmploymentHistoryResource extends Resource
                             ->label('Current Position')
                             ->default(false)
                             ->columnSpanFull(),
-                    ])
-                    ->columns(2),
-
-                Section::make('Salary Information')
-                    ->schema([
-                        Components\TextInput::make('salary')
-                            ->label('Salary')
-                            ->numeric()
-                            ->prefix('$')
-                            ->nullable(),
-                        
-                        Components\Select::make('salary_frequency')
-                            ->label('Salary Frequency')
-                            ->options([
-                                'hourly' => 'Per Hour',
-                                'monthly' => 'Per Month',
-                                'yearly' => 'Per Year',
-                            ])
-                            ->nullable(),
-                    ])
-                    ->columns(2),
+                    ]),
 
                 Section::make('Duration')
                     ->schema([
@@ -116,13 +97,31 @@ class EmploymentHistoryResource extends Resource
                     ])
                     ->columns(2),
 
+                Section::make('Salary Information')
+                    ->schema([
+                        Components\TextInput::make('salary')
+                            ->label('Salary')
+                            ->numeric()
+                            ->prefix('$')
+                            ->nullable(),
+
+                        Components\Select::make('salary_frequency')
+                            ->label('Salary Frequency')
+                            ->options([
+                                'hourly' => 'Per Hour',
+                                'monthly' => 'Per Month',
+                                'yearly' => 'Per Year',
+                            ])
+                            ->nullable(),
+                    ])
+                    ->columns(2),
+
                 Section::make('Additional Information')
                     ->schema([
                         Components\Textarea::make('description')
                             ->label('Job Description')
                             ->rows(4)
-                            ->nullable()
-                            ->columnSpanFull(),
+                            ->nullable(),
                     ]),
             ]);
     }
@@ -240,13 +239,13 @@ class EmploymentHistoryResource extends Resource
                     // Financial Overview
                     Columns\Layout\Split::make([
                         Columns\Layout\Stack::make([
-                            Columns\TextColumn::make('salary_display')
+                            Columns\TextColumn::make('salary')
                                 ->label('Salary')
-                                ->formatStateUsing(function ($record): string {
-                                    if (!$record->salary) {
+                                ->formatStateUsing(function ($state, $record): string {
+                                    if (!$state) {
                                         return 'Not specified';
                                     }
-                                    $salary = '$' . number_format($record->salary, 2);
+                                    $salary = '$' . number_format($state, 2);
                                     if ($record->salary_frequency) {
                                         $frequency = match ($record->salary_frequency) {
                                             'hourly' => '/hr',
@@ -260,8 +259,8 @@ class EmploymentHistoryResource extends Resource
                                 })
                                 ->icon('heroicon-o-banknotes')
                                 ->iconColor('warning')
-                                ->color(fn ($record): string => $record->salary ? 'warning' : 'gray')
-                                ->weight(fn ($record): FontWeight => $record->salary ? FontWeight::Bold : FontWeight::Medium)
+                                ->color(fn ($state): string => $state ? 'warning' : 'gray')
+                                ->weight(fn ($state): FontWeight => $state ? FontWeight::Bold : FontWeight::Medium)
                                 ->size('sm'),
                         ]),
 

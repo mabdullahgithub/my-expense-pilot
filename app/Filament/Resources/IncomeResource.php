@@ -35,25 +35,40 @@ class IncomeResource extends Resource
     {
         return $schema
             ->schema([
-                Section::make()
+                Section::make('Income Information')
+                    ->columns(2)
                     ->schema([
                         Components\TextInput::make('title')
                             ->required()
                             ->maxLength(255),
-                        Components\Textarea::make('description')
-                            ->maxLength(65535)
-                            ->columnSpanFull(),
+
                         Components\TextInput::make('amount')
                             ->required()
                             ->numeric()
                             ->prefix('$'),
+
                         Components\Select::make('category_id')
                             ->label('Category')
                             ->options(Category::where('is_active', true)->pluck('name', 'id'))
                             ->searchable()
-                            ->required(),
+                            ->required()
+                            ->preload(),
+
+                        Components\DateTimePicker::make('entry_date')
+                            ->label('Entry Date')
+                            ->required()
+                            ->default(now())
+                            ->native(false),
+
+                        Components\Textarea::make('description')
+                            ->maxLength(65535)
+                            ->columnSpanFull(),
+                    ]),
+
+                Section::make('Income Source')
+                    ->schema([
                         Components\Select::make('employment_history_id')
-                            ->label('Income Source (Position)')
+                            ->label('Employment Position')
                             ->options(function () {
                                 return EmploymentHistory::where('user_id', auth()->id())
                                     ->get()
@@ -68,13 +83,9 @@ class IncomeResource extends Resource
                             })
                             ->searchable()
                             ->nullable()
-                            ->helperText('Select the position/employment from which this income was received (optional)'),
-                        Components\DateTimePicker::make('entry_date')
-                            ->required()
-                            ->default(now())
-                            ->native(false),
-                    ])
-                    ->columns(2),
+                            ->helperText('Select the position/employment from which this income was received (optional)')
+                            ->preload(),
+                    ]),
             ]);
     }
 
